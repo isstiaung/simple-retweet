@@ -15,4 +15,4 @@ I built this on OSX but, this is built is with [python2.7](https://www.python.or
 * Copy config_skeleton.py to config.py  - in bash `cp config_skeleton.py config.py`
 * Fill in the 4 required consumer keys and access tokens
 * Fill in your username and the link to a medium blog that you might have had
-* Run in bash : `python py/get_last_year_tweets.py`
+* Run in bash : `python get_last_year_tweets.py`
