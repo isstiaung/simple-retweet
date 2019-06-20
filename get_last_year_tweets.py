@@ -1,9 +1,7 @@
-import tweepy
-import datetime
+import tweepy,datetime,json,string,requests,sys
 from datetime import date
-import json
 from config import *
-import string
+import xml.etree.cElementTree as ET
 
 def add_years(d, years):
     """Return a date that's `years` years after the date (or datetime)
@@ -53,20 +51,53 @@ def get_last_year_tweets(years):
     for url in urls:
         full_url = url[url_key]
         full_url = string.replace(full_url,medium,blog)
-        tweet_text = text % full_url
+        publish_tweet(full_url)
 
-        print tweet_text
 
-        publish = input(user_query)
+def publish_tweet(url):
+    tweet_text = text % url
 
-        if publish == yes:
-            print before_publishing
-            api.update_status(tweet_text)
-            print after_publishing
-        else:
-            print not_publishing
+    print tweet_text
+    publish = input(user_query)
+
+    if publish == yes:
+        print before_publishing
+        #api.update_status(tweet_text)
+        print after_publishing
+    else:
+        print not_publishing
+
+def convert_date(date):
+    return date.split('T')[0]
+
+def get_past_posts(years):
+    auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_token_key, access_token_secret)
+
+    api = tweepy.API(auth)
+    url = blog + sitemap
+    resp = requests.get(url)
+    xml = resp.content
+    today = datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    same_day_last_year = str(add_years(today,years)).split(" ")[0]
+    print same_day_last_year
+
+    root = ET.fromstring(xml)
+    print root.tag
+    for url in root.iter(namespace + url_str):
+        lastmod =  url.find(namespace + lastmod_str)
+        loc = url.find(namespace + loc_str)
+        if lastmod != None:
+            post_date =  lastmod.text
+            correct_format = convert_date(post_date)
+            if correct_format == same_day_last_year:
+                publish_tweet(loc.text)
+
 
 current_year = -1
 while current_year >= no_of_years:
-    get_last_year_tweets(current_year)
+    if mode_twitter:
+        get_last_year_tweets(current_year)
+    else:
+        get_past_posts(current_year)
     current_year = current_year - 1
