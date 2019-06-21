@@ -47,22 +47,26 @@ def get_last_year_tweets(years):
         for tweet in limited_tweets:
             if tweet.created_at < tomorrow_last_year and tweet.created_at > same_day_last_year:
                 urls.append((tweet.entities['urls'][0]))
-
+    count = 1
     for url in urls:
         full_url = url[url_key]
         full_url = string.replace(full_url,medium,blog)
-        publish_tweet(full_url)
+        publish_tweet(api,full_url,count)
+        count = count + 1
 
 
-def publish_tweet(url):
-    tweet_text = text % url
+def publish_tweet(api,url,count):
+    if count == 1:
+        tweet_text = text % url
+    else:
+        tweet_text = multi_text % url
 
     print tweet_text
     publish = input(user_query)
 
     if publish == yes:
         print before_publishing
-        #api.update_status(tweet_text)
+        api.update_status(tweet_text)
         print after_publishing
     else:
         print not_publishing
@@ -84,6 +88,8 @@ def get_past_posts(years):
 
     root = ET.fromstring(xml)
     print root.tag
+
+    count = 1
     for url in root.iter(namespace + url_str):
         lastmod =  url.find(namespace + lastmod_str)
         loc = url.find(namespace + loc_str)
@@ -91,13 +97,16 @@ def get_past_posts(years):
             post_date =  lastmod.text
             correct_format = convert_date(post_date)
             if correct_format == same_day_last_year:
-                publish_tweet(loc.text)
+                publish_tweet(api,loc.text,count)
+                count = count + 1
 
+def simple_retweet():
+    current_year = -1
+    while current_year >= no_of_years:
+        if mode_twitter:
+            get_last_year_tweets(current_year)
+        else:
+            get_past_posts(current_year)
+            current_year = current_year - 1
 
-current_year = -1
-while current_year >= no_of_years:
-    if mode_twitter:
-        get_last_year_tweets(current_year)
-    else:
-        get_past_posts(current_year)
-    current_year = current_year - 1
+simple_retweet()
